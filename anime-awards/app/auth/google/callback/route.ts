@@ -11,13 +11,14 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}?error=missing_code`)
   }
 
+  // Environment variables check
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!clientId || !clientSecret || !supabaseUrl || !supabaseKey) {
-    console.error('❌ Missing environment variables')
+    console.error('❌ Missing env vars')
     return NextResponse.redirect(`${origin}?error=missing_env`)
   }
 
@@ -41,23 +42,28 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}?error=auth_failed`)
     }
 
-    // 2. Create Supabase server client
+    // 2. Create a response – we will attach cookies to it
+    const response = NextResponse.redirect(`${origin}?login=success`)
+
+    // 3. Create Supabase server client that writes cookies to the response
     const cookieStore = await cookies()
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
+        // Read from request cookies
         get(name: string) {
           return cookieStore.get(name)?.value
         },
-        set() {
-          // We will set cookies manually via response – leave empty
+        // Write to response cookies (CRITICAL)
+        set(name: string, value: string, options: any) {
+          response.cookies.set({ name, value, ...options })
         },
-        remove() {
-          // We will remove cookies manually via response – leave empty
+        remove(name: string, options: any) {
+          response.cookies.set({ name, value: '', ...options })
         },
       },
     })
 
-    // 3. Sign in with the ID token
+    // 4. Sign in with the ID token – this will trigger the set() method above
     const { data, error: supabaseError } = await supabase.auth.signInWithIdToken({
       provider: 'google',
       token: id_token,
@@ -68,30 +74,13 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}?error=login_failed`)
     }
 
-    console.log('✅ Supabase session created for user:', data.user?.id)
+    console.log('✅ User logged in:', data.user?.id)
+    console.log('✅ Session cookie should be set via response')
 
-    // 4. Extract project reference from Supabase URL
-    const projectRef = supabaseUrl.match(/https:\/\/(.+)\.supabase\.co/)?.[1]
-    const cookieName = `sb-${projectRef}-auth-token`
-
-    // 5. Create redirect response
-    const response = NextResponse.redirect(`${origin}?login=success`)
-
-    // 6. Set the session cookie manually (this is the key fix)
-    response.cookies.set({
-      name: cookieName,
-      value: JSON.stringify(data.session),
-      path: '/',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-    })
-
-    console.log('✅ Session cookie set manually')
+    // 5. Return the response with cookies already attached
     return response
   } catch (err) {
     console.error('❌ Callback error:', err)
     return NextResponse.redirect(`${origin}?error=unknown`)
   }
-}
+  }
