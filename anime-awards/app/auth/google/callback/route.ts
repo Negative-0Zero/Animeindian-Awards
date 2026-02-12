@@ -65,3 +65,17 @@ export async function GET(request: Request) {
       provider: 'google',
       token: id_token,
     })
+
+    if (supabaseError) {
+      console.error('❌ Supabase sign in error:', supabaseError)
+      return NextResponse.redirect(`${origin}?error=login_failed`)
+    }
+
+    // 4. Success! Redirect to home
+    console.log('✅ Google login successful, session set')
+    return NextResponse.redirect('https://animeindian-awards.vercel.app')
+  } catch (err) {
+    console.error('❌ Callback error:', err)
+    return NextResponse.redirect(`${origin}?error=unknown`)
+  }
+}
