@@ -1,13 +1,12 @@
 'use client'
 
-import React from 'react'  // 👈 THIS MUST BE HERE
+import React from 'react'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/utils/supabase/client'
 import Login from '@/components/Login'
 import { Trophy, Calendar, Star, Flame, Heart, Zap, Clapperboard, Mic, Tv } from "lucide-react"
 
-// ─── SEASON CONFIG ─────────────────────────────────────────────
 const SEASON = {
     name: "Winter 2026",
     liveBadge: "Winter 2026",
@@ -21,7 +20,7 @@ const SEASON = {
     timelineWinners: "With Otaku Bhaskar"
 }
 
-// ─── CATEGORY ICONS & STYLES – FIXED TYPE: React.ReactNode, NOT JSX.Element ───
+// ✅ FIXED: React.ReactNode, NOT JSX.Element
 const categoryStyles: Record<string, { icon: React.ReactNode, color: string, gradient: string }> = {
     'Anime of the Season': {
         icon: <Trophy className="text-yellow-400" />,
@@ -70,7 +69,6 @@ const categoryStyles: Record<string, { icon: React.ReactNode, color: string, gra
     }
 }
 
-// Convert category name to URL slug
 function categoryToSlug(category: string): string {
     return category
         .toLowerCase()
@@ -110,13 +108,10 @@ export default function Home() {
 
     return (
         <main className="min-h-screen bg-slate-950 text-white selection:bg-purple-500 selection:text-white">
-
-            {/* ─── HEADER: PROFILE/EXIT (ONLY VISIBLE WHEN LOGGED IN) ─── */}
             <header className="absolute top-4 right-4 z-50">
                 <Login compact={false} hideWhenLoggedOut={true} />
             </header>
 
-            {/* ─── HERO SECTION ─────────────────────────── */}
             <div className="relative flex flex-col items-center justify-center h-[70vh] text-center px-4 overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
                     <div className="absolute top-[-10%] left-[20%] w-72 h-72 bg-purple-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse"></div>
@@ -163,7 +158,6 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* ─── LOGIN SECTION ─────────────────────────── */}
             <section id="login-section" className="max-w-4xl mx-auto px-4 py-12">
                 <div className="bg-gradient-to-br from-slate-900/90 to-slate-950/90 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl">
                     <div className="flex flex-col md:flex-row items-center gap-8">
@@ -185,7 +179,6 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* ─── CATEGORIES SECTION ─────────────────────────── */}
             <section id="categories-section" className="max-w-7xl mx-auto px-4 py-12">
                 <div className="bg-gradient-to-br from-slate-900/90 to-slate-950/90 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl">
                     <h2 className="text-3xl md:text-4xl font-bold mb-12 flex items-center justify-center gap-3 text-center">
@@ -248,7 +241,6 @@ export default function Home() {
     )
 }
 
-// ─── CUSTOM TICKET ICON ────────────────────────────────
 function TicketIcon() {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
