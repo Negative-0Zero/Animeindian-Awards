@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Exchange Google code for ID token
+    // 1. Exchange Google code for tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -28,43 +28,54 @@ export async function GET(request: Request) {
     const { id_token, error: googleError } = await tokenResponse.json()
 
     if (googleError || !id_token) {
-      console.error('Google token exchange error:', googleError)
+      console.error('❌ Google token exchange error:', googleError)
       return NextResponse.redirect(`${origin}?error=auth_failed`)
     }
 
-    // Create Supabase server client
+    // 2. Create Supabase server client with proper cookie handling
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() { return cookieStore.getAll() },
-          setAll(cookiesToSet) {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
             try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              )
-            } catch { /* ignore */ }
+              cookieStore.set({ name, value, ...options })
+            } catch (error) {
+              // Ignore – called from Server Component
+            }
+          },
+          remove(name: string, options: any) {
+            try {
+              cookieStore.set({ name, value: '', ...options })
+            } catch (error) {
+              // Ignore
+            }
           },
         },
       }
     )
 
-    // Sign in with ID token
+    // 3. Sign in with ID token
     const { error: supabaseError } = await supabase.auth.signInWithIdToken({
       provider: 'google',
       token: id_token,
     })
 
     if (supabaseError) {
-      console.error('Supabase sign in error:', supabaseError)
+      console.error('❌ Supabase sign in error:', supabaseError)
       return NextResponse.redirect(`${origin}?error=login_failed`)
     }
 
+    // 4. Success! Redirect to home
+    console.log('✅ Google login successful, session set')
     return NextResponse.redirect(origin)
   } catch (err) {
-    console.error('Callback error:', err)
+    console.error('❌ Callback error:', err)
     return NextResponse.redirect(`${origin}?error=unknown`)
   }
 }
