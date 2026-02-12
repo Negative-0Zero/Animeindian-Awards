@@ -138,7 +138,7 @@ export default function Home() {
                 <span className="font-semibold text-white">One person, one vote.</span> We use secure login to ensure fairness – no duplicate votes.
               </p>
               <p className="text-gray-400 text-sm">
-                🔐 Your email is only used for authentication and to prevent duplicate votes.
+                🔐 Your privacy matters. Data is used strictly for authentication and to prevent duplicate voting; it is purged immediately after authentication.
               </p>
             </div>
             <div className="md:w-1/2 w-full">
