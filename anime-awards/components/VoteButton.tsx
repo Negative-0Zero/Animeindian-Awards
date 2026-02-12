@@ -45,12 +45,12 @@ export default function VoteButton({
 
     // Check if already voted (skip for hero button)
     useEffect(() => {
-        if (!user || isHero) return
+        if (!user || isHero) return  // 👈 GUARD CLAUSE – fixes the TypeScript error
         async function checkVote() {
             const { data } = await supabase
                 .from('votes')
                 .select('id')
-                .eq('user_id', user.id)
+                .eq('user_id', user.id)  // ✅ Now TypeScript knows user is not null
                 .eq('category', category)
                 .maybeSingle()
             setVoted(!!data)
@@ -59,7 +59,7 @@ export default function VoteButton({
     }, [user, category, isHero])
 
     async function handleVote() {
-        // 🎯 HERO BUTTON MODE – no voting, just scroll or login
+        // Hero button mode
         if (isHero) {
             if (!user) {
                 setPendingVote(true)
@@ -82,7 +82,7 @@ export default function VoteButton({
             }
         }
 
-        // 🗳️ NORMAL VOTE BUTTON
+        // Normal vote button
         if (!user) {
             setPendingVote(true)
             const loginSection = document.getElementById('login-section')
