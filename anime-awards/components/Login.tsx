@@ -39,14 +39,34 @@ export default function Login({
     }
 
     async function signInGoogle() {
-        await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: window.location.origin,
-      // 👇 THIS IS THE MAGIC LINE – explicitly request ONLY these scopes
-                scopes: 'openid profile'
-            }
-        })
+  // Load Google Identity Services if not already loaded
+        if (!document.querySelector('script[src*="accounts.google.com/gsi/client"]')) {
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+            await new Promise((resolve) => { script.onload = resolve; });
+        }
+
+  // Configure and trigger Google One Tap sign-in with ONLY profile scope
+        const client = google.accounts.oauth2.initCodeClient({
+            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+            scope: 'openid profile', // NO EMAIL!
+            ux_mode: 'popup',
+            callback: async (response) => {
+                if (response.code) {
+        // Exchange the code for an ID token on your backend
+        // But we can use Supabase's built-in token verification
+                    const { data, error } = await supabase.auth.signInWithIdToken({
+                        provider: 'google',
+                        token: response.code,
+                    });
+                    if (error) console.error('Login error:', error);
+                }
+            },
+        });
+        client.requestCode();
     }
 
     async function signOut() {
