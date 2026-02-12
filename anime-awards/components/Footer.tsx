@@ -18,6 +18,9 @@ export default function Footer() {
             <h3 className="text-xl font-bold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent mb-2">
               r/AnimeIndian Awards
             </h3>
+            <p className="text-gray-400 text-sm max-w-md mb-3">
+              One person, one vote. Celebrating the best of Indian anime fandom.
+            </p>
             <div className="flex items-center justify-center md:justify-start gap-3 mt-2">
               <a 
                 href="https://discord.com/invite/jZ85M2GgXS" 
