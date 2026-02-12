@@ -6,19 +6,19 @@ import { FaDiscord, FaGoogle } from 'react-icons/fa'
 import { HiOutlineShieldCheck } from 'react-icons/hi'
 import { User } from '@supabase/supabase-js'
 
-// ✅ Declare the Google Identity Services namespace
+// ✅ Google Identity Services Type Declarations
 declare global {
   interface Window {
     google?: {
       accounts: {
         oauth2: {
-          initCodeClient: (config: {
+          initTokenClient: (config: {
             client_id: string;
             scope: string;
-            ux_mode: string;
-            callback: (response: { code?: string; error?: string }) => void;
+            response_type?: string;
+            callback: (response: any) => void;
           }) => {
-            requestCode: () => void;
+            requestAccessToken: () => void;
           };
         };
       };
@@ -40,6 +40,7 @@ export default function Login({
   const [user, setUser] = useState<User | null>(null)
   const [isGoogleScriptLoaded, setIsGoogleScriptLoaded] = useState(false)
 
+  // ─── AUTH SESSION & SCRIPT LOADER ──────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user || null)
@@ -49,7 +50,7 @@ export default function Login({
       setUser(session?.user || null)
     })
 
-    // Load Google Identity Services script
+    // Load Google Identity Services script (if not already present)
     if (!document.querySelector('script[src*="accounts.google.com/gsi/client"]')) {
       const script = document.createElement('script')
       script.src = 'https://accounts.google.com/gsi/client'
@@ -64,6 +65,7 @@ export default function Login({
     return () => listener?.subscription.unsubscribe()
   }, [])
 
+  // ─── DISCORD LOGIN ─────────────────────────────────────────
   async function signInDiscord() {
     await supabase.auth.signInWithOAuth({
       provider: 'discord',
@@ -71,64 +73,64 @@ export default function Login({
     })
   }
 
+  // ─── GOOGLE LOGIN – NO EMAIL, IMPLICIT FLOW ───────────────
   async function signInGoogle() {
-  // ✅ Wait for Google script to load
     if (!isGoogleScriptLoaded) {
       alert('Google Sign-In is still loading. Please try again.')
-        return
+      return
     }
 
-  // ✅ Ensure Google Client ID is configured
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-      if (!clientId) {
-        alert('Google Client ID is not configured. Please add NEXT_PUBLIC_GOOGLE_CLIENT_ID to your environment variables.')
-          return
-      }
+    if (!clientId) {
+      alert('Google Client ID is not configured. Please add NEXT_PUBLIC_GOOGLE_CLIENT_ID to your environment variables.')
+      return
+    }
+
     try {
-      const client = window.google?.accounts.oauth2.initCodeClient({
+      const client = window.google?.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: 'openid profile', // ✅ NO EMAIL – MAXIMUM PRIVACY
-        ux_mode: 'popup',
-        callback: async (response) => {
-          if (response.code) {
+        response_type: 'id_token',
+        callback: async (response: any) => {
+          if (response.id_token) {
             const { error } = await supabase.auth.signInWithIdToken({
               provider: 'google',
-              token: response.code,
+              token: response.id_token,
             })
-              if (error) {
-                console.error('Login error:', error)
-                  alert('Login failed. Please try again.')
-              }
+            if (error) {
+              console.error('Login error:', error)
+              alert('Login failed. Please try again.')
+            }
           } else if (response.error) {
             console.error('Google OAuth error:', response.error)
-              alert('Google login was cancelled or failed.')
+            alert('Google login was cancelled or failed.')
           }
         },
       })
 
-    // ✅ CRITICAL FIX: Check that client is defined before calling requestCode()
       if (client) {
-        client.requestCode()
+        client.requestAccessToken()
       } else {
         console.error('Failed to initialize Google Sign-In client')
-          alert('Google Sign-In failed to initialize. Please check your Client ID.')
+        alert('Google Sign-In failed to initialize. Please check your Client ID.')
       }
     } catch (error) {
       console.error('Failed to initialize Google Sign-In:', error)
-        alert('Google Sign-In failed to initialize. Please check your Client ID.')
+      alert('Google Sign-In failed to initialize. Please check your Client ID.')
     }
   }
 
+  // ─── LOGOUT ────────────────────────────────────────────────
   async function signOut() {
     await supabase.auth.signOut()
   }
 
-  // Hide when logged out and prop is true (for header)
+  // ─── HIDE WHEN LOGGED OUT (FOR HEADER) ────────────────────
   if (hideWhenLoggedOut && !user) {
     return null
   }
 
-  // ✅ LOGGED IN – show profile with Exit on the right
+  // ─── LOGGED IN – SHOW PROFILE WITH EXIT BUTTON ────────────
   if (user) {
     return (
       <div className="flex items-center justify-between w-full bg-black/20 backdrop-blur-sm px-3 py-2 rounded-full">
@@ -152,7 +154,7 @@ export default function Login({
     )
   }
 
-  // ❌ NOT LOGGED IN – compact mode (icons only)
+  // ─── COMPACT MODE (ICONS ONLY) ────────────────────────────
   if (compact) {
     return (
       <div className="flex gap-1">
@@ -174,7 +176,7 @@ export default function Login({
     )
   }
 
-  // ✅ FULL MODE – buttons with text + reassurance
+  // ─── FULL MODE – BUTTONS WITH TEXT + REASSURANCE ──────────
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -197,9 +199,9 @@ export default function Login({
       {showReassurance && (
         <div className="flex items-center gap-2 text-xs text-gray-300 bg-black/30 px-4 py-2 rounded-full backdrop-blur-sm">
           <HiOutlineShieldCheck className="text-green-400 text-base" />
-          <span>🔐 Your email is only used for authentication and to prevent duplicate votes.</span>
+          <span>🔐 We can't see your email, this only requests your profile for authentication and to prevent duplicate votes.</span>
         </div>
       )}
     </div>
   )
-          }
+}
