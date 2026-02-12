@@ -8,7 +8,7 @@ export default function AdminPage() {
   const [user, setUser] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'nominees' | 'categories'>('nominees')
+  const [activeTab, setActiveTab] = useState<'nominees' | 'categories' | 'content'>('nominees')
   const router = useRouter()
 
   // ----- Nominees State -----
@@ -33,18 +33,24 @@ export default function AdminPage() {
   })
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
 
-  // Available icons – map to Lucide icons
+  // ----- Site Content State -----
+  const [rulesContent, setRulesContent] = useState('')
+  const [savingContent, setSavingContent] = useState(false)
+  const [contentMessage, setContentMessage] = useState('')
+
+  // Available icons
   const iconOptions = [
-  'Trophy', 'Clapperboard', 'Mic', 'Flame', 'Zap', 'Heart', 'Tv', 'Star',
-  'Sword', 'Crown', 'Award', 'Medal', 'Sparkles', 'Camera', 'Film',
-  'Music', 'Radio', 'Gamepad', 'Brain', 'Cloud', 'Sun', 'Moon',
-  'Smile', 'ThumbsUp', 'Flag', 'Gift', 'Globe', 'Leaf', 'Diamond'
-]
+    'Trophy', 'Clapperboard', 'Mic', 'Flame', 'Zap', 'Heart', 'Tv', 'Star',
+    'Sword', 'Crown', 'Award', 'Medal', 'Sparkles', 'Camera', 'Film',
+    'Music', 'Radio', 'Gamepad', 'Brain', 'Cloud', 'Sun', 'Moon',
+    'Smile', 'ThumbsUp', 'Flag', 'Gift', 'Globe', 'Leaf', 'Diamond'
+  ]
 
   useEffect(() => {
     checkUser()
     fetchNominees()
     fetchCategories()
+    fetchRulesContent()
   }, [])
 
   async function checkUser() {
@@ -76,14 +82,39 @@ export default function AdminPage() {
       .select('*')
       .order('name', { ascending: true })
     setCategoryList(data || [])
-    
-    // Update nominee form category dropdown
     if (data) {
       setCategories(data.map(c => c.name))
       if (data.length > 0 && !nomineeForm.category) {
         setNomineeForm(prev => ({ ...prev, category: data[0].name }))
       }
     }
+  }
+
+  // ----- Fetch Rules Content -----
+  async function fetchRulesContent() {
+    const { data } = await supabase
+      .from('site_content')
+      .select('content')
+      .eq('key', 'rules')
+      .single()
+    if (data) setRulesContent(data.content)
+  }
+
+  // ----- Save Rules Content -----
+  async function saveRulesContent() {
+    setSavingContent(true)
+    setContentMessage('')
+    const { error } = await supabase
+      .from('site_content')
+      .update({ content: rulesContent, updated_at: new Date().toISOString() })
+      .eq('key', 'rules')
+
+    if (error) {
+      setContentMessage('❌ Error: ' + error.message)
+    } else {
+      setContentMessage('✅ Rules page updated!')
+    }
+    setSavingContent(false)
   }
 
   // ----- Nominee Handlers -----
@@ -124,7 +155,6 @@ export default function AdminPage() {
     e.preventDefault()
     if (!categoryForm.name || !categoryForm.slug) return alert('Name and slug are required')
 
-    // Auto-generate slug from name if not provided
     const slug = categoryForm.slug || categoryForm.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '')
 
     const { error } = await supabase.from('categories').insert([{
@@ -184,14 +214,10 @@ export default function AdminPage() {
 
   async function deleteCategory(id: string) {
     if (!confirm('⚠️ This will also delete all nominees in this category. Are you sure?')) return
-    
-    // First delete all nominees in this category (foreign key constraint)
     const category = categoryList.find(c => c.id === id)
     if (category) {
       await supabase.from('nominees').delete().eq('category', category.name)
     }
-    
-    // Then delete the category
     const { error } = await supabase.from('categories').delete().eq('id', id)
     if (!error) {
       fetchCategories()
@@ -252,10 +278,10 @@ export default function AdminPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-4 mb-8 border-b border-white/10">
+        <div className="flex gap-4 mb-8 border-b border-white/10 overflow-x-auto pb-2">
           <button
             onClick={() => setActiveTab('nominees')}
-            className={`px-4 py-2 font-medium transition-colors ${
+            className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
               activeTab === 'nominees'
                 ? 'text-white border-b-2 border-orange-500'
                 : 'text-gray-400 hover:text-white'
@@ -265,7 +291,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('categories')}
-            className={`px-4 py-2 font-medium transition-colors ${
+            className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
               activeTab === 'categories'
                 ? 'text-white border-b-2 border-orange-500'
                 : 'text-gray-400 hover:text-white'
@@ -273,12 +299,21 @@ export default function AdminPage() {
           >
             🏷️ Categories
           </button>
+          <button
+            onClick={() => setActiveTab('content')}
+            className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
+              activeTab === 'content'
+                ? 'text-white border-b-2 border-orange-500'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            📄 Rules & Content
+          </button>
         </div>
 
         {/* Nominees Tab */}
         {activeTab === 'nominees' && (
           <>
-            {/* Add Nominee Form */}
             <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6 mb-8">
               <h2 className="text-xl font-bold mb-4">➕ Add New Nominee</h2>
               <form onSubmit={addNominee} className="space-y-4">
@@ -335,7 +370,6 @@ export default function AdminPage() {
               </form>
             </div>
 
-            {/* Existing Nominees */}
             <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6">
               <h2 className="text-xl font-bold mb-4">📋 Current Nominees</h2>
               {nominees.length === 0 ? (
@@ -365,7 +399,6 @@ export default function AdminPage() {
         {/* Categories Tab */}
         {activeTab === 'categories' && (
           <>
-            {/* Add/Edit Category Form */}
             <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6 mb-8">
               <h2 className="text-xl font-bold mb-4">
                 {editingCategoryId ? '✏️ Edit Category' : '➕ Add New Category'}
@@ -472,7 +505,6 @@ export default function AdminPage() {
               </form>
             </div>
 
-            {/* Existing Categories */}
             <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6">
               <h2 className="text-xl font-bold mb-4">🏷️ Current Categories</h2>
               {categoryList.length === 0 ? (
@@ -511,7 +543,53 @@ export default function AdminPage() {
             </div>
           </>
         )}
+
+        {/* 📄 Content Tab – Edit Rules Page */}
+        {activeTab === 'content' && (
+          <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6">
+            <h2 className="text-xl font-bold mb-4">📄 Rules Page Content</h2>
+            <p className="text-gray-400 text-sm mb-4">
+              Edit the text below. You can use Markdown for formatting (headings, lists, bold, etc.).
+            </p>
+            <textarea
+              value={rulesContent}
+              onChange={(e) => setRulesContent(e.target.value)}
+              className="w-full bg-slate-800 border border-white/10 rounded-lg px-4 py-3 text-white font-mono text-sm"
+              rows={20}
+              placeholder="# Voting Rules..."
+            />
+            <div className="flex items-center gap-4 mt-4">
+              <button
+                onClick={saveRulesContent}
+                disabled={savingContent}
+                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold px-6 py-3 rounded-full transition-all disabled:opacity-50"
+              >
+                {savingContent ? 'Saving...' : '💾 Save Changes'}
+              </button>
+              {contentMessage && (
+                <span className={`text-sm ${contentMessage.includes('✅') ? 'text-green-400' : 'text-red-400'}`}>
+                  {contentMessage}
+                </span>
+              )}
+            </div>
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <h3 className="text-lg font-semibold mb-2">📌 Preview</h3>
+              <div className="bg-slate-950 border border-white/10 rounded-lg p-6 prose prose-invert max-w-none">
+                <div className="markdown text-gray-300 whitespace-pre-wrap">
+                  {rulesContent.split('\n').map((line, i) => {
+                    if (line.startsWith('# ')) return <h1 key={i} className="text-3xl font-bold mb-4 text-white">{line.slice(2)}</h1>
+                    if (line.startsWith('## ')) return <h2 key={i} className="text-2xl font-bold mt-6 mb-2 text-white">{line.slice(3)}</h2>
+                    if (line.startsWith('- ')) return <li key={i} className="ml-6 list-disc">{line.slice(2)}</li>
+                    if (line.trim() === '') return <br key={i} />
+                    return <p key={i} className="mb-2">{line}</p>
+                  })}
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">* Simple preview – actual page will have full styling.</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
-  }
+}
