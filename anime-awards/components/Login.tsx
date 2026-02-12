@@ -31,18 +31,37 @@ export default function Login({
     return () => listener?.subscription.unsubscribe()
   }, [])
 
-  // ✅ GOOGLE LOGIN – NO EMAIL, EXPLICIT SCOPES, FORCE RE-CONSENT
   async function signInGoogle() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-        scopes: 'openid profile',      // ⚠️ NO EMAIL SCOPE – MAXIMUM PRIVACY
-        queryParams: {
-          prompt: 'consent',           // 🔁 Forces Google to show consent screen with updated scopes
+    if (!isGoogleScriptLoaded) {
+      alert('Google Sign-In is still loading. Please try again.')
+        return
+    }
+
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+      if (!clientId) {
+        alert('Google Client ID is not configured.')
+          return
+      }
+
+    try {
+      const client = window.google?.accounts.oauth2.initCodeClient({
+        client_id: clientId,
+        scope: 'openid profile', // ✅ NO EMAIL – MAXIMUM PRIVACY
+        ux_mode: 'popup',
+        redirect_uri: `${window.location.origin}/auth/google/callback`, // ✅ Your new callback
+        callback: (response) => {
+        // The code will be sent to the redirect URI – this callback only handles errors
+          if (response.error) {
+            console.error('Google OAuth error:', response.error)
+              alert('Google login was cancelled or failed.')
+          }
         },
-      },
-    })
+      })
+        client.requestCode()
+    } catch (error) {
+      console.error('Failed to initialize Google Sign-In:', error)
+        alert('Google Sign-In failed to initialize.')
+    }
   }
 
   // ✅ DISCORD LOGIN – EMAIL UNAVOIDABLE (SUPABASE HARDCODES IT)
