@@ -10,7 +10,7 @@ export default function Footer() {
         {/* Desktop: flex row, Mobile: column */}
         <div className="flex flex-col md:flex-row md:justify-between gap-10 md:gap-12">
           
-          {/* ─── LEFT COLUMN: Brand + Social + Copyright ─── */}
+          {/* ─── LEFT COLUMN: Brand + Social (left‑aligned on desktop) ─── */}
           <div className="flex-1 text-center md:text-left">
             {/* Badge */}
             <div className="inline-block px-3 py-1 rounded-full bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/30 text-xs font-medium text-orange-300 mb-3">
@@ -20,8 +20,8 @@ export default function Footer() {
             <h3 className="text-xl font-bold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent mb-2">
               r/AnimeIndian Awards
             </h3>
-            {/* Social Icons */}
-            <div className="flex items-center justify-center md:justify-start gap-3 mt-2 mb-6">
+            {/* Social Icons – left-aligned on desktop, centered on mobile */}
+            <div className="flex items-center justify-center md:justify-start gap-3 mt-2">
               <a 
                 href="https://discord.com/invite/jZ85M2GgXS" 
                 target="_blank" 
@@ -50,26 +50,9 @@ export default function Footer() {
                 <FaYoutube size={20} />
               </a>
             </div>
-            {/* Copyright & Credit – moved here, directly below brand */}
-            <div className="text-center md:text-left border-t md:border-t-0 border-white/5 pt-6 md:pt-0 mt-4 md:mt-8">
-              <p className="text-xs text-gray-500">
-                © 2026 r/AnimeIndian. All rights reserved.
-              </p>
-              <p className="text-xs text-gray-600 flex items-center justify-center md:justify-start gap-1 mt-2">
-                <span>💜 Made with love by</span>
-                <a 
-                  href="https://www.reddit.com/r/animeindian/s/RGJidGAzub" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-pink-400 hover:text-pink-300 transition-colors"
-                >
-                  Otaku Bhaskar Team
-                </a>
-              </p>
-            </div>
           </div>
 
-          {/* ─── RIGHT COLUMN: Navigation (Vertical) ─── */}
+          {/* ─── RIGHT COLUMN: Navigation (vertical) ─── */}
           <div className="md:w-48 text-center md:text-left">
             <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">
               Navigate
@@ -97,6 +80,24 @@ export default function Footer() {
               </li>
             </ul>
           </div>
+        </div>
+
+        {/* ─── SEPARATE CENTERED ROW FOR COPYRIGHT & CREDIT ─── */}
+        <div className="mt-12 pt-6 border-t border-white/5 text-center">
+          <p className="text-xs text-gray-500">
+            © 2026 r/AnimeIndian. All rights reserved.
+          </p>
+          <p className="text-xs text-gray-600 flex items-center justify-center gap-1 mt-2">
+            <span>💜 Made with love by</span>
+            <a 
+              href="https://www.reddit.com/r/animeindian/s/RGJidGAzub" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-pink-400 hover:text-pink-300 transition-colors"
+            >
+              Otaku Bhaskar Team
+            </a>
+          </p>
         </div>
       </div>
     </footer>
