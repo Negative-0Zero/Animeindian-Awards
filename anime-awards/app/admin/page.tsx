@@ -35,8 +35,11 @@ export default function AdminPage() {
 
   // Available icons – map to Lucide icons
   const iconOptions = [
-    'Trophy', 'Clapperboard', 'Mic', 'Flame', 'Zap', 'Heart', 'Tv', 'Star'
-  ]
+  'Trophy', 'Clapperboard', 'Mic', 'Flame', 'Zap', 'Heart', 'Tv', 'Star',
+  'Sword', 'Crown', 'Award', 'Medal', 'Sparkles', 'Camera', 'Film',
+  'Music', 'Radio', 'Gamepad', 'Brain', 'Cloud', 'Sun', 'Moon',
+  'Smile', 'ThumbsUp', 'Flag', 'Gift', 'Globe', 'Leaf', 'Diamond'
+]
 
   useEffect(() => {
     checkUser()
