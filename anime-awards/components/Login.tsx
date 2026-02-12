@@ -54,28 +54,29 @@ export default function Login({
         return null
     }
 
-    // ✅ LOGGED IN – show profile
-    if (user) {
-        return (
-            <div className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-3 py-2 rounded-full">
-                <img
-                    src={user.user_metadata.avatar_url}
-                    className="w-8 h-8 rounded-full border-2 border-purple-400"
-                    alt="avatar"
-                />
-                <span className="text-sm text-white hidden sm:inline">
-                    {user.user_metadata.full_name || user.user_metadata.name}
-                </span>
-                <button
-                    onClick={signOut}
-                    className="text-xs text-gray-300 hover:text-white px-2 py-1 rounded-full bg-black/30"
-                >
-                    Exit
-                </button>
-            </div>
-        )
-    }
-
+// ✅ LOGGED IN – show profile with Exit on the right
+if (user) {
+  return (
+    <div className="flex items-center justify-between w-full bg-black/20 backdrop-blur-sm px-3 py-2 rounded-full">
+      <div className="flex items-center gap-2">
+        <img 
+          src={user.user_metadata.avatar_url} 
+          className="w-8 h-8 rounded-full border-2 border-purple-400" 
+          alt="avatar"
+        />
+        <span className="text-sm text-white hidden sm:inline">
+          {user.user_metadata.full_name || user.user_metadata.name}
+        </span>
+      </div>
+      <button 
+        onClick={signOut} 
+        className="text-xs text-gray-300 hover:text-white px-2 py-1 rounded-full bg-black/30 ml-2"
+      >
+        Exit
+      </button>
+    </div>
+  )
+}
     // ❌ NOT LOGGED IN – compact mode (icons only)
     if (compact) {
         return (
