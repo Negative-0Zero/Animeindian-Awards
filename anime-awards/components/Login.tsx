@@ -6,7 +6,6 @@ import { FaDiscord, FaGoogle } from 'react-icons/fa'
 import { HiOutlineShieldCheck } from 'react-icons/hi'
 import { User } from '@supabase/supabase-js'
 
-// ✅ Google Identity Services type declaration
 declare global {
   interface Window {
     google?: {
@@ -41,7 +40,6 @@ export default function Login({
   const [user, setUser] = useState<User | null>(null)
   const [isGoogleScriptLoaded, setIsGoogleScriptLoaded] = useState(false)
 
-  // ─── AUTH SESSION & GOOGLE SCRIPT LOADER ──────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user || null)
@@ -51,7 +49,6 @@ export default function Login({
       setUser(session?.user || null)
     })
 
-    // Load Google Identity Services
     if (!document.querySelector('script[src*="accounts.google.com/gsi/client"]')) {
       const script = document.createElement('script')
       script.src = 'https://accounts.google.com/gsi/client'
@@ -66,7 +63,6 @@ export default function Login({
     return () => listener?.subscription.unsubscribe()
   }, [])
 
-  // ─── DISCORD LOGIN (email unavoidable – Supabase hardcodes it) ───
   async function signInDiscord() {
     await supabase.auth.signInWithOAuth({
       provider: 'discord',
@@ -74,7 +70,6 @@ export default function Login({
     })
   }
 
-  // ─── GOOGLE LOGIN – NO EMAIL, AUTHORIZATION CODE FLOW ──────────
   async function signInGoogle() {
     if (!isGoogleScriptLoaded) {
       alert('Google Sign-In is still loading. Please try again.')
@@ -90,7 +85,7 @@ export default function Login({
     try {
       const client = window.google?.accounts.oauth2.initCodeClient({
         client_id: clientId,
-        scope: 'openid profile', // ✅ NO EMAIL – MAXIMUM PRIVACY
+        scope: 'openid profile',
         ux_mode: 'popup',
         redirect_uri: `${window.location.origin}/auth/google/callback`,
         callback: (response) => {
@@ -98,11 +93,9 @@ export default function Login({
             console.error('Google OAuth error:', response.error)
             alert('Google login was cancelled or failed.')
           }
-          // The code is sent to the redirect URI – handled in callback route
         },
       })
 
-      // ✅ Guard clause – prevents TypeScript error and runtime crash
       if (client) {
         client.requestCode()
       } else {
@@ -119,12 +112,10 @@ export default function Login({
     await supabase.auth.signOut()
   }
 
-  // ─── HEADER: HIDE WHEN LOGGED OUT ─────────────────────────
   if (hideWhenLoggedOut && !user) {
     return null
   }
 
-  // ─── LOGGED IN – PROFILE + EXIT BUTTON ────────────────────
   if (user) {
     return (
       <div className="flex items-center justify-between w-full bg-black/20 backdrop-blur-sm px-3 py-2 rounded-full">
@@ -148,7 +139,6 @@ export default function Login({
     )
   }
 
-  // ─── COMPACT MODE (ICONS ONLY) – FOR HEADER ───────────────
   if (compact) {
     return (
       <div className="flex gap-1">
@@ -170,7 +160,6 @@ export default function Login({
     )
   }
 
-  // ─── FULL MODE – BUTTONS WITH TEXT + REASSURANCE ──────────
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -198,4 +187,4 @@ export default function Login({
       )}
     </div>
   )
-}
+    }
